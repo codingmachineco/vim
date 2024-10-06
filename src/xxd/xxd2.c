@@ -15,15 +15,43 @@
 char hexxa[] = "0123456789abcdef";
 char *hexx = hexxa;
 
+void print_usage(const char *progname)
+{
+    fprintf(stderr, "Usage: %s [OPTIONS] [FILE]\n", progname);
+    fprintf(stderr, "Options:\n");
+    fprintf(stderr, "  -c COLS  Number of columns\n");
+}
+
 int main(int argc, char *argv[])
 {
     FILE *fp = stdin;
+    int cols = COLS;
     int c, n = 0, p = 0;
     char l[LLEN + 2]; // +2 for '\n' and '\0'
 
-    if (argc > 1)
-    {
-        fp = fopen(argv[1], "rb");
+    // command-line
+    for (int i = 1; i < argc; i++) {
+        if (argv[i][0] == '-') {
+            switch (argv[i][1])
+            {
+            case 'h':
+                print_usage(argv[0]);
+                return 0;
+            case 'c':
+                if (i + 1 < argc) {
+                    cols = atoi(argv[++i]);
+                } else {
+                    fprintf(stderr, "xxd: option -c requires an argument\n");
+                    print_usage(argv[0]);
+                }
+                break;
+            
+            default:
+                break;
+            }
+        } else {
+            fp = fopen(argv[i], "rb");
+        }
     }
 
     while ((c = getc(fp)) != EOF)
@@ -38,9 +66,9 @@ int main(int argc, char *argv[])
         }
         l[7 + 2 + p / 2 + p * 2] = hexx[(c >> 4) & 0xf];
         l[7 + 2 + p / 2 + p * 2 + 1] = hexx[c & 0xf];
-        l[7 + 2 + 5 * (COLS / 2) + 1 + p] = (c > 31 && c < 127) ? c : '.';
+        l[7 + 2 + 5 * (cols / 2) + 1 + p] = (c > 31 && c < 127) ? c : '.';
         n++;
-        if (++p == COLS)
+        if (++p == cols)
         {
             fputs(l, stdout);
             p = 0;
